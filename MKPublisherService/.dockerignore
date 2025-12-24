@@ -1,0 +1,9 @@
+target
+.mvn
+.git
+.idea
+*.iml
+*.log
+Dockerfile
+README.md
+.env
