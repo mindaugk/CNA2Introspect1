@@ -1,4 +1,4 @@
-Introspect 1 Projrct
+Introspect 1 Project
 
 Overview
 - This is unfinished project.
