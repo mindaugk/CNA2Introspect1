@@ -1,0 +1,13 @@
+export AWS_PROFILE_NAME=cna-lab-1
+aws sts get-caller-identity --profile $AWS_PROFILE_NAME
+export AWS_REGION=us-east-1
+
+===============================================================================
+
+export AWS_EKS_CLUSTER_NAME=mk-cluster
+echo $AWS_EKS_CLUSTER_NAME
+aws --profile "$AWS_PROFILE_NAME" --region "$AWS_REGION" eks update-kubeconfig --name "$AWS_EKS_CLUSTER_NAME"
+
+kubectl apply -f ServiceAccounts.yaml
+kubectl apply -f Deployment-mkpublisher.yaml
+kubectl apply -f Deployment-mkconsumer.yaml
