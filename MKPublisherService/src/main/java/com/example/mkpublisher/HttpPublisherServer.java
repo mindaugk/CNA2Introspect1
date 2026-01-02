@@ -19,6 +19,7 @@ public class HttpPublisherServer {
     public HttpPublisherServer(int port) throws IOException {
         server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/publish", new PublishHandler());
+        server.createContext("/health", new HealthHandler());
         server.setExecutor(null);
     }
 
@@ -28,6 +29,18 @@ public class HttpPublisherServer {
 
     public void stop(int delay) {
         server.stop(delay);
+    }
+
+    static class HealthHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            String response = "{\"status\":\"healthy\"}";
+            byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, bytes.length);
+            exchange.getResponseBody().write(bytes);
+            exchange.close();
+        }
     }
 
     static class PublishHandler implements HttpHandler {

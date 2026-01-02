@@ -1,0 +1,17 @@
+export AWS_PROFILE_NAME=cna-lab-1
+aws sts get-caller-identity --profile $AWS_PROFILE_NAME
+export AWS_REGION=us-east-1
+export PUBLISHER_REPOSITORY_NAME=mkpublisher
+export CONSUMER_REPOSITORY_NAME=mkconsumer
+
+===============================================================================
+
+aws --profile "$AWS_PROFILE_NAME" --region "$AWS_REGION" ecr get-login-password | docker login --username AWS --password-stdin 872823407497.dkr.ecr.us-east-1.amazonaws.com
+
+docker build -t "$PUBLISHER_REPOSITORY_NAME":latest .
+docker tag "$PUBLISHER_REPOSITORY_NAME":latest 872823407497.dkr.ecr.us-east-1.amazonaws.com/"$PUBLISHER_REPOSITORY_NAME":latest
+docker push 872823407497.dkr.ecr.us-east-1.amazonaws.com/"$PUBLISHER_REPOSITORY_NAME":latest
+
+docker build -t "$CONSUMER_REPOSITORY_NAME":latest .
+docker tag "$CONSUMER_REPOSITORY_NAME":latest 872823407497.dkr.ecr.us-east-1.amazonaws.com/"$CONSUMER_REPOSITORY_NAME":latest
+docker push 872823407497.dkr.ecr.us-east-1.amazonaws.com/"$CONSUMER_REPOSITORY_NAME":latest

@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mkconsumer
+  labels:
+    app: mkconsumer
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mkconsumer
+  template:
+    metadata:
+      labels:
+        app: mkconsumer
+    spec:
+      serviceAccountName: mkconsumer-sa
+      containers:
+      - name: mkconsumer
+        image: 872823407497.dkr.ecr.us-east-1.amazonaws.com/mkconsumer:latest
+        env:
+        - name: QUEUE_URL
+          value: "https://sqs.us-east-1.amazonaws.com/872823407497/mkpublisher-queue"
+        - name: AWS_REGION
+          value: "us-east-1"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
