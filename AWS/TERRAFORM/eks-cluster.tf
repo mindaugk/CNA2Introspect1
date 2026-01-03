@@ -56,6 +56,26 @@ resource "aws_eks_cluster" "mk_cluster" {
   }
 }
 
+# EBS CSI Driver Addon
+resource "aws_eks_addon" "ebs_csi_driver" {
+  cluster_name             = aws_eks_cluster.mk_cluster.name
+  addon_name               = "aws-ebs-csi-driver"
+  addon_version            = "v1.37.0-eksbuild.1"  # Use latest compatible version
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "PRESERVE"
+
+  depends_on = [
+    aws_eks_cluster.mk_cluster,
+    aws_iam_role_policy_attachment.eks_block_storage_policy
+  ]
+
+  tags = {
+    Name        = "ebs-csi-driver"
+    Environment = "dev"
+    ManagedBy   = "terraform"
+  }
+}
+
 # Note: IAM user access is automatically granted via bootstrap_cluster_creator_admin_permissions = true
 
 # EKS Access Entry for Federated User

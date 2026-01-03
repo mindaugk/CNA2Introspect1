@@ -36,6 +36,12 @@ resource "aws_iam_role_policy_attachment" "eks_node_sqs_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSQSFullAccess"
 }
 
+# Attach EBS CSI Driver Policy for volume provisioning
+resource "aws_iam_role_policy_attachment" "eks_node_ebs_csi_policy" {
+  role       = aws_iam_role.eks_node_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+}
+
 # Outputs
 output "eks_node_role_arn" {
   description = "ARN of the EKS node role"
