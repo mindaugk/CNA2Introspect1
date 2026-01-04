@@ -19,6 +19,7 @@ public class HttpPublisherServer {
     public HttpPublisherServer(int port) throws IOException {
         server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/publish", new PublishHandler());
+        server.createContext("/publish-dapr", new PublishDaprHandler());
         server.createContext("/health", new HealthHandler());
         server.setExecutor(null);
     }
@@ -71,24 +72,63 @@ public class HttpPublisherServer {
             InputStream is = exchange.getRequestBody();
             String message = new String(is.readAllBytes(), StandardCharsets.UTF_8);
             
-            System.out.println("[PUBLISHER] Received POST request on /publish endpoint");
-            System.out.println("[PUBLISHER] Message content: " + message);
-            System.out.println("[PUBLISHER] Target queue: " + queueUrl);
+            System.out.println("[PUBLISHER-SQS] Received POST request on /publish endpoint");
+            System.out.println("[PUBLISHER-SQS] Message content: " + message);
+            System.out.println("[PUBLISHER-SQS] Target queue: " + queueUrl);
 
             try (SqsPublisher publisher = new SqsPublisher(Region.of(regionStr))) {
                 SendMessageResponse resp = publisher.publish(queueUrl, message);
-                System.out.println("[PUBLISHER] SUCCESS - Message sent to SQS. MessageId: " + resp.messageId());
+                System.out.println("[PUBLISHER-SQS] SUCCESS - Message sent to SQS. MessageId: " + resp.messageId());
                 
-                String body = "{\"messageId\":\"" + resp.messageId() + "\"}";
+                String body = "{\"messageId\":\"" + resp.messageId() + "\",\"channel\":\"sqs\"}";
                 byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
                 exchange.getResponseHeaders().set("Content-Type", "application/json");
                 exchange.sendResponseHeaders(200, bytes.length);
                 exchange.getResponseBody().write(bytes);
             } catch (Exception e) {
-                System.err.println("[PUBLISHER] FAILED - Error sending message to SQS: " + e.getMessage());
+                System.err.println("[PUBLISHER-SQS] FAILED - Error sending message to SQS: " + e.getMessage());
                 e.printStackTrace();
                 
                 byte[] b = ("Failed to send: " + e.getMessage()).getBytes(StandardCharsets.UTF_8);
+                exchange.sendResponseHeaders(500, b.length);
+                exchange.getResponseBody().write(b);
+            } finally {
+                exchange.close();
+            }
+        }
+    }
+
+    // Handler for Dapr publishing
+    static class PublishDaprHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if (!"POST".equalsIgnoreCase(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(405, -1);
+                return;
+            }
+
+            InputStream is = exchange.getRequestBody();
+            String message = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            
+            System.out.println("[PUBLISHER-DAPR] Received POST request on /publish-dapr endpoint");
+            System.out.println("[PUBLISHER-DAPR] Message content: " + message);
+            System.out.println("[PUBLISHER-DAPR] Publishing via Dapr to mkpublisher-dapr-queue");
+
+            try {
+                DaprPublisher daprPublisher = new DaprPublisher();
+                String result = daprPublisher.publish(message);
+                System.out.println("[PUBLISHER-DAPR] SUCCESS - " + result);
+                
+                String body = "{\"status\":\"success\",\"message\":\"Published via Dapr\",\"channel\":\"dapr\"}";
+                byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+                exchange.getResponseHeaders().set("Content-Type", "application/json");
+                exchange.sendResponseHeaders(200, bytes.length);
+                exchange.getResponseBody().write(bytes);
+            } catch (Exception e) {
+                System.err.println("[PUBLISHER-DAPR] FAILED - Error publishing via Dapr: " + e.getMessage());
+                e.printStackTrace();
+                
+                byte[] b = ("Failed to send via Dapr: " + e.getMessage()).getBytes(StandardCharsets.UTF_8);
                 exchange.sendResponseHeaders(500, b.length);
                 exchange.getResponseBody().write(b);
             } finally {

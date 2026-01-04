@@ -47,10 +47,36 @@ resource "aws_iam_role" "mkpublisher_irsa" {
   }
 }
 
-# Attach SQS access policy to MKPublisher IRSA role
-resource "aws_iam_role_policy_attachment" "mkpublisher_sqs" {
-  role       = aws_iam_role.mkpublisher_irsa.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSQSFullAccess"
+# Inline policy for MKPublisher IRSA role - least privilege
+resource "aws_iam_role_policy" "mkpublisher_policy" {
+  name = "mkpublisher-sqs-sns-policy"
+  role = aws_iam_role.mkpublisher_irsa.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "sqs:SendMessage",
+          "sqs:GetQueueUrl",
+          "sqs:GetQueueAttributes"
+        ]
+        Resource = [
+          "arn:aws:sqs:us-east-1:872823407497:mkpublisher-queue",
+          "arn:aws:sqs:us-east-1:872823407497:mkpublisher-dapr-queue"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "sns:Publish",
+          "sns:GetTopicAttributes"
+        ]
+        Resource = "arn:aws:sns:us-east-1:872823407497:mkpublisher-dapr-topic"
+      }
+    ]
+  })
 }
 
 # IAM Role for MKConsumer Service Account
@@ -83,10 +109,37 @@ resource "aws_iam_role" "mkconsumer_irsa" {
   }
 }
 
-# Attach SQS access policy to MKConsumer IRSA role
-resource "aws_iam_role_policy_attachment" "mkconsumer_sqs" {
-  role       = aws_iam_role.mkconsumer_irsa.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSQSFullAccess"
+# Inline policy for MKConsumer IRSA role - least privilege
+resource "aws_iam_role_policy" "mkconsumer_policy" {
+  name = "mkconsumer-sqs-sns-policy"
+  role = aws_iam_role.mkconsumer_irsa.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueUrl",
+          "sqs:GetQueueAttributes"
+        ]
+        Resource = [
+          "arn:aws:sqs:us-east-1:872823407497:mkpublisher-queue",
+          "arn:aws:sqs:us-east-1:872823407497:mkpublisher-dapr-queue"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "sns:Subscribe",
+          "sns:GetTopicAttributes"
+        ]
+        Resource = "arn:aws:sns:us-east-1:872823407497:mkpublisher-dapr-topic"
+      }
+    ]
+  })
 }
 
 # Output the IAM role ARNs for use in Kubernetes service accounts

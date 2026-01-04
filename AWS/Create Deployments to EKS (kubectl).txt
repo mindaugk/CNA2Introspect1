@@ -4,6 +4,10 @@ export AWS_REGION=us-east-1
 
 ===============================================================================
 
+terraform apply -auto-approve
+
+===============================================================================
+
 export AWS_EKS_CLUSTER_NAME=mk-cluster
 echo $AWS_EKS_CLUSTER_NAME
 aws --profile "$AWS_PROFILE_NAME" --region "$AWS_REGION" eks update-kubeconfig --name "$AWS_EKS_CLUSTER_NAME"
@@ -11,3 +15,11 @@ aws --profile "$AWS_PROFILE_NAME" --region "$AWS_REGION" eks update-kubeconfig -
 kubectl apply -f ServiceAccounts.yaml
 kubectl apply -f Deployment-mkpublisher.yaml
 kubectl apply -f Deployment-mkconsumer.yaml
+
+kubectl apply -f dapr-pubsub-component.yaml
+kubectl apply -f dapr-subscription.yaml
+
+===============================================================================
+
+kubectl rollout restart deployment mkpublisher
+kubectl rollout restart deployment mkconsumer

@@ -13,6 +13,11 @@ spec:
     metadata:
       labels:
         app: mkpublisher
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "mkpublisher"
+        dapr.io/app-port: "8080"
+        dapr.io/log-level: "info"
     spec:
       serviceAccountName: mkpublisher-sa
       containers:

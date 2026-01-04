@@ -13,11 +13,18 @@ spec:
     metadata:
       labels:
         app: mkconsumer
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "mkconsumer"
+        dapr.io/app-port: "8080"
+        dapr.io/log-level: "info"
     spec:
       serviceAccountName: mkconsumer-sa
       containers:
       - name: mkconsumer
         image: 872823407497.dkr.ecr.us-east-1.amazonaws.com/mkconsumer:latest
+        ports:
+        - containerPort: 8080
         env:
         - name: QUEUE_URL
           value: "https://sqs.us-east-1.amazonaws.com/872823407497/mkpublisher-queue"

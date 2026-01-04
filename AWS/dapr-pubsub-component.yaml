@@ -1,0 +1,16 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: aws-pubsub
+  namespace: default
+spec:
+  type: pubsub.aws.snssqs
+  version: v1
+  metadata:
+  - name: region
+    value: "us-east-1"
+  - name: disableEntityManagement
+    value: "true"
+  - name: sqsDeadLettersQueueName
+    value: ""
+  # Authentication via IRSA (service account annotations)
